@@ -8,7 +8,7 @@ import { loadEnvFile } from 'node:process'
 
 loadEnvFile()
 
-export const resolver = {
+export const resolvers = {
     Query: {
         greeting: () => {
             return "Hello GraphQL";
@@ -19,15 +19,37 @@ export const resolver = {
         },
         user: async (_,{ id }) => {
             return await userModel.findById(id)
+        },
+        todos: async () => {
+            return await todoModel.find()
+        },
+        todo: async (_, { id }) => {
+            return await todoModel.findById(id)
+        },
+        todosByUser: async (_, { userId }) => {
+            return await todoModel.find({ userId })
         }
-
     },
+
+    User: {
+        todos: async (parent) => {
+            return await todoModel.find({ userId: parent._id })
+        }
+    },
+
+    Todo: {
+        user: async (parent) => {
+            return await userModel.findById(parent.userId)
+        }
+    },
+
     Mutation: {
-        register: async (_,args) => {
+        register:async (_,{user}) => {
             try {
-                console.log("test");
-                const user = await userModel.create(args.user)
-                return user
+                console.log(user);
+                const usr = await userModel.create(user)
+                console.log(usr);
+                return usr
             } catch (err) {
                 console.log("REGISTER ERROR:", err.message)
                 throw new GraphQLError(err.message)
@@ -58,12 +80,12 @@ export const resolver = {
             let token = jwt.sign({id: usr._id, role: usr.role}, process.env.SECRET)
             return {message: "Login successful", token}
         },
-        addTodo: async (_,args) => {
-            let todo = await todoModel.create(args.todo)
+        createTodo: async (_, { title, userId }) => {
+            let todo = await todoModel.create({ title, userId })
             return todo
         },
         updateTodo: async (_,args,context) => {
-            if (context.id, context.role) {
+            if (context.id && context.role) {
                 try{
                     const todo = await todoModel.findOne({ userId: context.id })
                     if (todo) {
@@ -84,7 +106,7 @@ export const resolver = {
             }   
         },
         deleteTodo: async (_,args,context) => {
-            if (context.id, context.role) {
+            if (context.id && context.role) {
                 try{
                     const todo = await todoModel.findOne({ userId: context.id })
                     if (todo) {
@@ -106,13 +128,13 @@ export const resolver = {
             
         },
         updateUser: async (_, { id, data }, context) => {
-            if (!context.user) {
+            if (!context.id) {
                 throw new GraphQLError("Not authenticated", {
                     extensions: { code: "UNAUTHENTICATED" },
                 });
             }
 
-            if (context.user.role !== "admin") {
+            if (context.role !== "admin") {
                 throw new GraphQLError("Not authorized", {
                     extensions: { code: "FORBIDDEN" },
                 });
@@ -148,13 +170,13 @@ export const resolver = {
         },
 
         deleteUser: async (_, { id }, context) => {
-            if (!context.user) {
+            if (!context.id) {
                 throw new GraphQLError("Not authenticated", {
                     extensions: { code: "UNAUTHENTICATED" },
                 });
             }
                 
-            if (context.user.role !== "admin") {
+            if (context.role !== "admin") {
                 throw new GraphQLError("Not authorized", {
                     extensions: { code: "FORBIDDEN" },
                 });

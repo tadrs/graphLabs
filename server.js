@@ -1,7 +1,7 @@
 import { ApolloServer } from "@apollo/server";
 import { startStandaloneServer } from "@apollo/server/standalone";
 import { schema } from "./schema.js";
-import { resolver } from "./resolver.js";
+import { resolvers } from "./resolver.js";
 import mongoose from "mongoose";
 import { loadEnvFile } from 'node:process'
 import jwt from "jsonwebtoken";
@@ -10,7 +10,7 @@ import jwt from "jsonwebtoken";
 
 loadEnvFile()
 
-mongoose.connect('mongodb://127.0.0.1:27017/geaph').then(() => {
+mongoose.connect('mongodb://127.0.0.1:27017/graph').then(() => {
     console.log('connected to db');
 }).catch((err) => {
     console.log(err);
@@ -19,7 +19,7 @@ mongoose.connect('mongodb://127.0.0.1:27017/geaph').then(() => {
 
 const server = new ApolloServer({
     typeDefs: schema,
-    resolver,
+    resolvers,
     formatError: (err) => {
         return {
             message: err.message,

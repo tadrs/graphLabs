@@ -3,7 +3,7 @@ export const schema = `#graphql
 type Query {
   greeting: String
   users: [User]
-  user(id: ID): User
+  user(id: ID!): User
   todos: [Todo]
   todo(id: ID!): Todo
   todosByUser(userId: ID!): [Todo]
@@ -15,6 +15,8 @@ type Mutation {
   createTodo(title: String!, userId: ID!): Todo
   updateTodo(id: ID!, title: String, status: S): Todo
   deleteTodo(id: ID!): String
+  updateUser(id: ID!, data: UpdateUserInput!): User
+  deleteUser(id: ID!): String
 }
 
 interface IUser {
@@ -61,4 +63,10 @@ input LoggedInUser {
   password: String!
 }
 
+input UpdateUserInput {
+  email: String
+  username: String
+  password: String
+  role: String
+}
 `;
